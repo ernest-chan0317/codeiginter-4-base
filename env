@@ -1,0 +1,56 @@
+# CodeIgniter 4 Base Project - Environment Configuration
+# Copy this file to `.env` and adjust values for your environment.
+
+#--------------------------------------------------------------------
+# ENVIRONMENT
+#--------------------------------------------------------------------
+
+CI_ENVIRONMENT = development
+
+#--------------------------------------------------------------------
+# APP
+#--------------------------------------------------------------------
+
+app.baseURL = 'http://localhost:8080/'
+app.forceGlobalSecureRequests = false
+
+#--------------------------------------------------------------------
+# DATABASE
+#--------------------------------------------------------------------
+
+database.default.hostname = localhost
+database.default.database = ci4_base
+database.default.username = root
+database.default.password =
+database.default.DBDriver = MySQLi
+database.default.port = 3306
+
+# Collab/intranet DB (used for keylink -> username in production)
+database.collab.hostname = localhost
+database.collab.database =
+database.collab.username =
+database.collab.password =
+database.collab.DBDriver = MySQLi
+database.collab.port = 3306
+
+#--------------------------------------------------------------------
+# AUTH
+#--------------------------------------------------------------------
+
+# Username used for token exchange when CI_ENVIRONMENT is not production
+auth.devUsername = devuser
+
+# JWT secret (generate: php -r "echo bin2hex(random_bytes(32));")
+authjwt.keys.default.0.secret = change-me-generate-with-php-random-bytes-32
+
+#--------------------------------------------------------------------
+# ENCRYPTION
+#--------------------------------------------------------------------
+
+# encryption.key =
+
+#--------------------------------------------------------------------
+# LOGGER
+#--------------------------------------------------------------------
+
+logger.threshold = 4
