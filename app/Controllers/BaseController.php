@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Models\BaseModel;
 use CodeIgniter\Controller;
 use CodeIgniter\Model;
 use CodeIgniter\HTTP\CLIRequest;
 use CodeIgniter\HTTP\IncomingRequest;
-use CodeIgniter\HTTP\RequestInterface;
-use CodeIgniter\HTTP\ResponseInterface;
-use Psr\Log\LoggerInterface;
 
 abstract class BaseController extends Controller
 {
@@ -23,26 +21,24 @@ abstract class BaseController extends Controller
 
     protected $helpers = [];
 
-    public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger)
+    protected function baseIndex(): array
     {
-        parent::initController($request, $response, $logger);
-    }
+        $pageSize = (int) ($this->request->getVar('pageSize') ?? 10);
+        $pageSize = max(1, min($pageSize, 100));
 
-    public function baseIndex(Model $model): array
-    {
-        $pageSize   = $this->request->getVar('pageSize') ?? 1;
         $page       = (int) ($this->request->getVar('page') ?? 0);
         $sortBy     = $this->request->getVar('sortBy');
         $activeOnly = $this->request->getVar('activeOnly');
+        $model      = $this->model;
 
-        $model->where($model->table . '.deleted_at', null);
-
-        if ($activeOnly) {
+        if ($activeOnly && $model instanceof BaseModel && $model->hasActiveColumn()) {
             $model = $model->where('active', true);
         }
 
-        if ($sortBy) {
-            $model = $model->orderBy($sortBy, $this->request->getVar('orderBy'));
+        if ($sortBy && $model instanceof BaseModel && $model->isSortable((string) $sortBy)) {
+            $order = strtolower((string) ($this->request->getVar('orderBy') ?? 'asc'));
+            $order = in_array($order, ['asc', 'desc'], true) ? $order : 'asc';
+            $model = $model->orderBy((string) $sortBy, $order);
         }
 
         $data  = $model->paginate($pageSize, 'default', $page + 1);
@@ -62,25 +58,23 @@ abstract class BaseController extends Controller
         ];
     }
 
-    public function baseCreate(): int
+    protected function baseCreate(): int|false
     {
-        $data               = $this->request->getJSON(true);
-        $data['created_by'] = auth()->user()->username;
+        $data = $this->request->getJSON(true) ?? [];
+        $id   = $this->model->insert($data);
 
-        return (int) $this->model->insert($data);
+        return $id === false ? false : (int) $id;
     }
 
-    public function baseUpdate(int $id): void
+    protected function baseUpdate(int $id): bool
     {
-        $data               = $this->request->getJSON(true);
-        $data['updated_by'] = auth()->user()->username;
+        $data = $this->request->getJSON(true) ?? [];
 
-        $this->model->update($id, $data);
+        return $this->model->update($id, $data);
     }
 
-    public function baseDelete(int $id): void
+    protected function baseDelete(int $id): bool
     {
-        $this->model->delete($id);
-        $this->model->update($id, ['deleted_by' => auth()->user()->username]);
+        return $this->model->delete($id);
     }
 }
