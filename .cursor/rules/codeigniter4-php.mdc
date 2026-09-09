@@ -1,0 +1,62 @@
+---
+description: CodeIgniter 4 and PHP 8.1+ standards for this project
+globs: **/*.php
+alwaysApply: false
+---
+
+# CodeIgniter 4 & PHP Standards
+
+This is a **CodeIgniter 4** API backend (PHP ^8.1). Follow CI4 conventions and modern PHP best practices.
+
+## PHP Standards
+
+- Target **PHP 8.1+** features: typed properties, union types, `readonly`, enums where appropriate.
+- Add `declare(strict_types=1);` at the top of **new** application files (`app/`).
+- Use **type hints** on all method parameters and **return types** on all methods (including `void`).
+- Use **property types** on class properties; avoid untyped `$model`-style properties when the type is known.
+- Follow **PSR-12** formatting: 4-space indent, one class per file, `declare`/`namespace`/`use` order.
+- Prefer early returns; avoid deep nesting.
+- Catch specific exceptions; never use empty `catch` blocks.
+
+## Project Structure
+
+| Layer | Location | Base class |
+|-------|----------|------------|
+| Controllers | `app/Controllers/` | `BaseController` |
+| Models | `app/Models/` | `BaseModel` |
+| Migrations | `app/Database/Migrations/` | `Migration` |
+| Config | `app/Config/` | — |
+| Helpers | `app/Helpers/` | — |
+
+- Namespace: `App\Controllers`, `App\Models`, `App\Database\Migrations`.
+- Do not modify framework files in `vendor/`.
+
+## Controllers
+
+- Extend `BaseController`; use `ResponseTrait` for JSON API responses.
+- Reuse shared CRUD logic via `baseIndex()`, `baseCreate()`, `baseUpdate()`, `baseDelete()` when applicable.
+- Set `$this->model` in constructor or `initController` before calling base methods.
+- Return typed responses: `ResponseInterface` from CI4 helpers, or `array`/`int|null` from base helpers.
+- Validate input with `$this->validate($rules)` and return `$this->validator->getErrors()` on failure.
+- Read JSON body with `$this->request->getJSON(true)`; query params with `$this->request->getVar()`.
+- Use `auth()->user()` (CodeIgniter Shield) for authenticated user context.
+- Register routes in `app/Config/Routes.php` using `$routes->group()` with appropriate filters (`cors`, `jwt`).
+
+## Models
+
+- Extend `BaseModel` (provides soft deletes, timestamps, validation scaffolding).
+- Declare `$table`, `$allowedFields`, `$validationRules`, and `$validationMessages`.
+- Keep database logic in models; keep controllers thin.
+- Use Query Builder via model methods; avoid raw SQL unless necessary.
+
+## Services & Dependencies
+
+- Resolve framework services via `service('name')` or `config('Name')`.
+- Inject dependencies through constructor when a class owns a specific model/service.
+- Use `helper('name')` or declare in `$helpers` on the controller.
+
+## Security
+
+- Never commit secrets; use `.env` and `getenv()` / `env()`.
+- Apply JWT filter on protected API route groups.
+- Sanitize/validate all external input before persistence.
