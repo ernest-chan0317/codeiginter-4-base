@@ -35,6 +35,8 @@ abstract class BaseController extends Controller
             $model = $model->where('active', true);
         }
 
+        $model = $this->applyIndexFilters($model);
+
         if ($sortBy && $model instanceof BaseModel && $model->isSortable((string) $sortBy)) {
             $order = strtolower((string) ($this->request->getVar('orderBy') ?? 'asc'));
             $order = in_array($order, ['asc', 'desc'], true) ? $order : 'asc';
@@ -56,6 +58,27 @@ abstract class BaseController extends Controller
             'firstPage'   => $pager->getFirstPage(),
             'lastPage'    => $pager->getLastPage(),
         ];
+    }
+
+    protected function applyIndexFilters(Model $model): Model
+    {
+        foreach ($this->getIndexFilterMap() as $param => $column) {
+            $value = $this->request->getVar($param);
+
+            if ($value !== null && $value !== '') {
+                $model = $model->where($column, $value);
+            }
+        }
+
+        return $model;
+    }
+
+    /**
+     * @return array<string, string> queryParam => dbColumn
+     */
+    protected function getIndexFilterMap(): array
+    {
+        return property_exists($this, 'indexFilters') ? $this->indexFilters : [];
     }
 
     protected function baseCreate(): int|false
